@@ -1,0 +1,294 @@
+<!DOCTYPE HTML>
+<html>
+    <head>
+        <style>
+            #wrapper {
+                position: relative;
+            }
+
+            #buttonWrapper {
+                position: absolute;
+                width: 30px;
+                top: 2px;
+                right: 2px;
+            }
+
+            input[type =
+            "button"] {
+				z-index:100;
+                padding: 5px;
+                width: 30px;
+                margin: 0px 0px 2px 0px;
+            }
+			div
+			{
+				position:absolute;
+				margin-left:70%;
+				margin-botton:0px;
+			}
+			canvas
+			{
+				background-color:green;
+			}
+        </style>
+		<script src="RequestAnimationFrame.js"></script>
+        <script>
+			var rows=15;
+			var cols=15;
+			var sizeX=40;
+			var sizeY=40;
+			var timer=25;
+			var bw = sizeX*rows;
+			var bh = sizeY*cols;
+			var p = 0;
+			var cw = bw + (p*2) + 1;
+			var ch = bh + (p*2) + 1;
+			var translatePos ={
+				x: cw/2,
+				y: ch/2
+			};
+			var translatePos2 ={
+				x: 0,
+				y: 0
+			};
+			var trX=0;
+			var trY=0;
+			var tr2X=0;
+			var tr2Y=0;
+			var scaleX = 1.0;
+			var scaleY = 1.0;
+			var fX=0,fY=0,sX=0,sY=0;
+			var pool=new Array(rows);
+            window.onload = function()
+			{
+				for (var row=0; row <rows; row++)
+				{
+					pool[row]=new Array(cols);
+					for (var col = 0; col < cols; col++)
+					{
+						pool[row][col] = false;
+					}
+				}
+				var element=document.createElement('canvas');
+				var parent = document.getElementsByTagName('body')[0];
+				element.id="canvas";
+				element.width=cw;
+				element.height=ch;
+				parent.appendChild(element);
+
+                var canvas = document.getElementById("canvas");
+
+                var scaleMultiplier = 0.95;
+                var startDragOffset = {};
+                var mouseDown = false;
+				
+                document.getElementById("plus").addEventListener("click", function(){
+                    scaleX /= scaleMultiplier;
+                    scaleY /= scaleMultiplier;
+					translatePos2.x = translatePos.x + (cw*scaleX-cw)/(-2)+(translatePos.x*scaleX-translatePos.x);
+					translatePos2.y = translatePos.y + (ch*scaleY-ch)/(-2)+(translatePos.y*scaleY-translatePos.y);
+                    draw(scaleX, scaleY, translatePos2.x, translatePos2.y); }, false);
+					
+                document.getElementById("minus").addEventListener("click", function(){
+                    scaleX *= scaleMultiplier;
+                    scaleY *= scaleMultiplier;
+				//	if(scaleX<1) scaleX=1;
+				//	if(scaleY<1) scaleY=1;
+					translatePos2.x = translatePos.x + (cw*scaleX-cw)/(-2)+(translatePos.x*scaleX-translatePos.x);
+					translatePos2.y = translatePos.y + (ch*scaleY-ch)/(-2)+(translatePos.y*scaleY-translatePos.y);
+                    draw(scaleX, scaleY, translatePos2.x, translatePos2.y);}, false);
+					
+				document.getElementById("start").addEventListener("click", start, false);
+                canvas.addEventListener("mousedown", function(evt){
+                    mouseDown = true;
+                    startDragOffset.x = evt.clientX - translatePos.x;
+                    startDragOffset.y = evt.clientY - translatePos.y; });
+				canvas.addEventListener("click", click, false);
+                canvas.addEventListener("mouseup", function(evt){
+                    mouseDown = false; });
+                canvas.addEventListener("mouseover", function(evt){
+                    mouseDown = false; });
+                canvas.addEventListener("mouseout", function(evt){
+                    mouseDown = false; });
+                canvas.addEventListener("mousemove", function(evt){
+                    if (mouseDown) {
+                        translatePos.x = evt.clientX - startDragOffset.x;
+                        translatePos.y = evt.clientY - startDragOffset.y;
+							trX=translatePos.x+(cw*scaleX-cw)/(-2)+(translatePos.x*scaleX-translatePos.x);
+							trY=translatePos.y+(ch*scaleX-ch)/(-2)+(translatePos.y*scaleY-translatePos.y);
+                        draw(scaleX, scaleY, trX, trY);
+                    } });
+				
+				translatePos.x= (cw*scaleX-cw)/(-2);
+				translatePos.y= (cw*scaleX-cw)/(-2);
+                draw(scaleX, scaleY, translatePos.x, translatePos.y);
+            }; 
+            function draw(scaleX, scaleY, translatePosX, translatePosY){
+                var canvas = document.getElementById("canvas");
+                var context = canvas.getContext("2d");
+				/*if(typeof(scaleX)==='undefined') scaleX = 10;
+				if(typeof(scaleY)==='undefined') scaleY = 20;
+				if(typeof(translatePosX)==='undefined') translatePosX = 20;
+				if(typeof(translatePosY)==='undefined') translatePosY = 20;*/
+				//if(translatePosX>0) translatePosX=0;
+				//if(translatePosY>0) translatePosY=0;
+				tr2X=translatePosX;
+				tr2Y=translatePosY;
+                context.clearRect(0, 0, cw, ch);
+				
+                context.save();
+                context.translate(translatePosX, translatePosY);
+                context.scale(scaleX, scaleY);
+                context.beginPath(); // begin custom shape
+				for(var row=0; row<rows; row++)
+				{
+					for(var col=0; col<cols; col++)
+					{
+						var x=col*sizeX+1;
+						var y=row*sizeY+1;
+						if (pool[row][col] == 1) 
+						{
+							context.fillStyle="#66CCFF";
+							context.fillRect(x,y,sizeX-1,sizeY-1);
+						}
+					}
+				}
+				for (var x = 0; x <= bw; x += sizeX) 
+				{
+					context.moveTo(0.5 + x + p, p);
+					context.lineTo(0.5 + x + p, bh + p);
+				}
+				for (var x = 0; x <= bh; x += sizeX) 
+				{
+					context.moveTo(p, 0.5 + x + p);
+					context.lineTo(bw + p, 0.5 + x + p);
+				}
+                context.closePath(); // complete custom shape
+                context.strokeStyle = "black";
+                context.stroke();
+                context.restore();
+            }
+			function click(event)
+			{
+				var canvas = document.getElementById("canvas");
+				var context = canvas.getContext("2d");
+				var x1=event.clientX - canvas.getBoundingClientRect().left-sizeX/2;
+				var y1=event.clientY - canvas.getBoundingClientRect().top-sizeY/2;
+				var col=parseInt((event.clientX - tr2X-9)/(sizeX*scaleX));
+				var row=parseInt((event.clientY - tr2Y-9)/(sizeY*scaleY));
+				var x2=tr2X+col*(sizeX*scaleX)+1*scaleX;
+				var y2=tr2Y+row*(sizeY*scaleY)+1*scaleY;
+				context.fillStyle="#66CCFF";
+                if (pool[row][col] == 0) 
+				{
+					pool[row][col] = 1;
+					context.fillRect(x2,y2,sizeX*scaleX-1*scaleX,sizeY*scaleY-1*scaleY);
+				}
+                else 
+				{	
+					pool[row][col] = 0;
+					context.clearRect(x2, y2, sizeX*scaleX-1*scaleX, sizeY*scaleY-1*scaleY);
+				}
+			}
+			
+			function start()
+			{
+				var canvas = document.getElementById("canvas");
+				var context = canvas.getContext("2d");
+				context.fillStyle="#66CCFF";
+				
+				//var burzo=setInterval(LifeAndDeath,timer);
+				LifeAndDeath();
+
+				function CountOfNeigh(row, col)
+				{
+					if (row == 0 && col == 0) return pool[0][1] + pool[1][0] + pool[1][1];
+					else if (row == 0 && col == cols - 1)
+						return (pool[0][cols - 2] + pool[1][cols - 2] + pool[1][cols - 1]);
+
+					else if (row == rows - 1 && col == cols - 1)
+						return (pool[rows - 2][cols - 1] + pool[rows - 2][cols - 2] + pool[row - 1][cols - 2]);
+
+					else if (row == rows - 1 && col == 0)
+						return (pool[rows - 2][0] + pool[rows - 2][1] + pool[row - 1][1]);
+
+					else if (row == 0)
+						return (pool[0][col - 1] + pool[1][col - 1] + pool[1][col] + pool[1][col + 1] + pool[0][col + 1]);
+
+					else if (row == rows - 1)
+						return (pool[rows - 1][col - 1] + pool[rows - 2][col - 1] + pool[rows - 2][col]
+							+ pool[rows - 2][col + 1] + pool[rows - 1][col + 1]);
+
+					else if (col == 0)
+						return (pool[row - 1][0] + pool[row - 1][1] + pool[row][1] + pool[row + 1][1] + pool[row + 1][0]);
+
+					else if (col == cols - 1)
+						return (pool[row - 1][col - 1] + pool[row - 1][col - 2] + pool[row][col - 2]
+							+ pool[row + 1][col - 2] + pool[row + 1][col - 1]);
+
+					else return (pool[row - 1][col - 1] + pool[row - 1][col] + pool[row - 1][col + 1] + pool[row][col - 1]
+						+ pool[row][col + 1] + pool[row + 1][col - 1] + pool[row + 1][col] + pool[row + 1][col + 1]);
+				}
+				function LifeAndDeath()
+				{
+					requestId = window.requestAnimationFrame( LifeAndDeath );
+					
+					var tmpPool=new Array(rows);
+					for (var row = 0; row < rows; row++)
+					{
+						tmpPool[row]=new Array(cols);
+						for (var col = 0; col < cols; col++)
+						{
+							tmpPool[row][col] = 0;
+						}
+					}
+					for (var row = 0; row < rows; row++)
+					{
+						for (var col = 0; col < cols; col++)
+						{
+							if (CountOfNeigh(row, col) < 2) tmpPool[row][col] = 0;
+							else if (CountOfNeigh(row, col) == 2) tmpPool[row][col] = pool[row][col];
+							else if (CountOfNeigh(row, col) == 3) tmpPool[row][col] = 1;
+							else tmpPool[row][col] = 0;
+						}
+					}
+					for (var row = 0; row < rows; row++)
+					{
+						for (var col = 0; col < cols; col++)
+						{
+							if(pool[row][col] != tmpPool[row][col])
+							{		
+								var x2=tr2X+col*(sizeX*scaleX)+1*scaleX;
+								var y2=tr2Y+row*(sizeY*scaleY)+1*scaleY;				
+								if(pool[row][col]==false)
+									context.fillRect(x2, y2, sizeX*scaleX-1*scaleX,sizeY*scaleY-1*scaleY);
+								else 
+									context.clearRect(x2, y2, sizeX*scaleX-1*scaleX, sizeY*scaleY-1*scaleY);
+							}
+							pool[row][col] = tmpPool[row][col];
+						}
+					}
+				}
+				document.getElementById("stop").addEventListener("click", stop, false);
+				function stop()
+				{
+					//cancelRequestAnimationFrame()
+					//clearInterval(burzo);
+					if (requestId)
+						window.cancelAnimationFrame(requestId);
+					requestId = 0;
+
+				}
+			}
+        </script>
+    </head>
+    <body onmousedown="return false;">
+        <div id="wrapper">
+            <div id="buttonWrapper">
+                <input type="button" id="plus" value="+"><input type="button" id="minus" value="-">
+				<input type="button" id="start" value="start">
+				<input type="button" id="stop" value="stop">
+            </div>
+        </div>
+    </body>
+</html>
